@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compresso Connect F - SWKI HE301-01 Auslegung</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <meta name="description"
+        content="Berechnungsprogramm für das Ausdehnungsgefäss Compresso Connect F nach SWKI HE301-01 Norm.">
+    <style>
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            header,
+            .project-card,
+            .input-section,
+            .button-wrapper,
+            .status-box,
+            .results-container,
+            #results,
+            .print-btn-bar {
+                display: none !important;
+            }
+
+            .background-blobs {
+                display: none !important;
+            }
+
+            #report-view {
+                display: block !important;
+                border: none !important;
+                box-shadow: none !important;
+                background: white !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
+
+            .report-card {
+                padding: 0 !important;
+                border: none !important;
+                background: white !important;
+            }
+
+            .print-header h1 {
+                color: black !important;
+                font-size: 2.5rem !important;
+            }
+
+            .print-header p {
+                color: #555 !important;
+            }
+
+            h2,
+            h3,
+            h4 {
+                color: black !important;
+                border-bottom: 1px solid #eee !important;
+                padding-bottom: 4px !important;
+            }
+
+            .report-content table td {
+                border: 1px solid #ccc;
+                padding: 4px;
+            }
+
+            .report-content p {
+                page-break-inside: avoid;
+                margin-bottom: 12px;
+            }
+
+            .report-content hr {
+                border-color: #eee;
+            }
+        }
+        .imi-strategy-card:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border-color: var(--accent) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .imi-strategy-card:active {
+            transform: translateY(0);
+        }
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(16, 185, 129, 0.95);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            z-index: 10000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .toast-icon {
+            background: rgba(255,255,255,0.2);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+
+
+    <aside id="side-results-panel" class="side-panel">
+        <div class="side-panel-header">
+            <h3>Live-Resultate</h3>
+            <button type="button" id="btn-copy-side" class="btn-copy-small">Kopieren</button>
+        </div>
+        <div id="side-results-content" class="side-panel-content">
+            <p class="placeholder-text">Werte eingeben für Live-Resultate...</p>
+        </div>
+    </aside>
+    <main class="app-container">
+        <header class="app-header">
+            <div class="header-content" style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                <div>
+                    <h1>Druckhaltungsanlage</h1>
+                    <p>IMI / SWKI HE301-01</p>
+                </div>
+                <div class="benchmark-toggle-wrapper" onclick="document.getElementById('mode-imi-benchmark').click()">
+                    <span class="benchmark-label">IMI APP</span>
+                    <label class="switch" onclick="event.stopPropagation()">
+                        <input type="checkbox" id="mode-imi-benchmark">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <!-- IMI APP Warning Banner -->
+                <div id="benchmark-warning-banner" class="benchmark-banner hidden" style="margin: 0; padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(255,165,0,0.4);">
+                    <span class="banner-icon" style="font-size: 0.9rem;">⚠️</span>
+                    <div class="banner-text" style="font-size: 0.7rem; font-weight: 700;">
+                        IMI APP AKTIV
+                    </div>
+                </div>
+            </div>
+            <div class="header-right" style="display: flex; align-items: center; gap: 1rem;">
+                <button type="button" onclick="window.open('Lex_Org.pdf', '_blank')" class="btn-icon-only" title="Lexikon Original (PDF)">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                </button>
+                <button type="button" onclick="window.open('Lex_ABC.html', '_blank')" class="btn-icon-only" title="Terminologie ABC">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><text x="7" y="13" font-size="7" font-family="Arial" font-weight="bold" fill="currentColor">ABC</text></svg>
+                </button>
+                <button type="button" id="btn-library" class="btn-icon-only" title="Bibliothek">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                </button>
+                <button type="button" id="btn-toggle-settings" class="btn-icon-only" title="Einstellungen">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </button>
+                <button type="button" id="btn-copy-comparison" class="btn-icon-only" title="Kopieren">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Settings Drawer / Pulldown -->
+        <div id="settings-panel" class="settings-drawer hidden">
+            <div class="card settings-card">
+                <div class="settings-header">
+                    <h2>⚙️ Standardwerte konfigurieren</h2>
+                    <button type="button" id="btn-close-settings" class="btn-close">&times;</button>
+                </div>
+                <p class="settings-intro">Legen Sie fest, welche Werte beim Starten einer neuen Berechnung oder beim
+                    Neuladen der Seite standardmäßig vorgegeben werden sollen.</p>
+
+                <div class="grid-2 mt-1">
+                    <div class="input-group">
+                        <label for="def-system-type">Anlagentyp (Standard)</label>
+                        <select id="def-system-type">
+                            <option value="heating">Heizung</option>
+                            <option value="cooling">Kälte</option>
+                            <option value="geothermal">Erdsondenanlage</option>
+                            <option value="heatpump">Wärmepumpe</option>
+                            <option value="dh">Fernwärme</option>
+                            <option value="solar">Solar</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="def-fluid-type">Medium (Standard)</label>
+                        <select id="def-fluid-type">
+                            <option value="Water">Wasser (0% Glykol)</option>
+                            <option value="MEG30">30% MEG</option>
+                            <option value="MEG50">50% MEG</option>
+                            <option value="MPG30">30% MPG</option>
+                            <option value="MPG50">50% MPG</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="def-height-hst">Statische Höhe Hst [m]</label>
+                        <input type="text" inputmode="decimal" id="def-height-hst" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="def-press-pz">Min. Zulaufdruck pz [bar]</label>
+                        <input type="text" inputmode="decimal" id="def-press-pz" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="def-power-q">Leistung Q [kW]</label>
+                        <input type="text" inputmode="decimal" id="def-power-q" step="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="def-vol-vs">Anlagenvolumen Vs [ℓ]</label>
+                        <input type="text" inputmode="decimal" id="def-vol-vs" step="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="def-temp-smax">Systemtemp. tsmax [°C]</label>
+                        <input type="text" inputmode="decimal" id="def-temp-smax" step="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="def-temp-r">Rücklauftemp. tr [°C]</label>
+                        <input type="text" inputmode="decimal" id="def-temp-r" step="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="def-margin-left">Linker Rand [px]</label>
+                        <input type="text" inputmode="numeric" id="def-margin-left" step="1" value="300">
+                    </div>
+                    <div class="input-group">
+                        <label for="def-app-width">Fensterbreite [px]</label>
+                        <input type="text" inputmode="numeric" id="def-app-width" step="1" value="1100">
+                    </div>
+                    <div class="input-group">
+                        <label for="def-side-height">Resultate-Höhe [px]</label>
+                        <input type="text" inputmode="numeric" id="def-side-height" step="1" value="550">
+                    </div>
+                    <div class="input-group">
+                        <label for="def-side-width">Resultate-Breite [px]</label>
+                        <input type="text" inputmode="numeric" id="def-side-width" step="1" value="420">
+                    </div>
+                    <div class="input-group" style="grid-column: span 2; flex-direction: row; align-items: center; gap: 1rem; background: rgba(0,255,135,0.05); padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(0,255,135,0.1);">
+                        <input type="checkbox" id="def-permanent-benchmark" style="width: 20px; height: 20px; cursor: pointer;">
+                        <label for="def-permanent-benchmark" style="margin: 0; cursor: pointer; color: var(--accent); font-weight: 700;">Dauerhaft IMI APP Modus aktiv</label>
+                    </div>
+                </div>
+
+                <div class="settings-footer mt-2">
+                    <button type="button" id="btn-reset-factory" class="btn-danger-outline">Werkseinstellungen</button>
+                    <button type="button" id="btn-save-defaults" class="btn-primary"><span>💾</span> Als Standard
+                        speichern</button>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="card project-card">
+            <div class="project-info" style="flex-grow: 1;">
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label for="project-name">Projektbezeichnung / Bezeichnung</label>
+                    <div class="input-with-select">
+                        <input type="text" id="project-name" placeholder="Name der Berechnung angeben...">
+                        <select id="project-select" class="project-dropdown">
+                            <option value="">-- Gespeicherte Projekte --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="project-actions">
+                <button type="button" id="btn-new-calc" class="btn-secondary"
+                    title="Alle Felder auf Standardwerte zurücksetzen">
+                    <span>✨</span> Neu
+                </button>
+                <div class="button-divider"></div>
+                <button type="button" id="btn-save-internal" class="btn-primary-small"
+                    title="Im Browser speichern / Überschreiben">
+                    <span>💾</span> Speichern
+                </button>
+                <div class="button-divider"></div>
+                <button type="button" id="btn-export-file" class="btn-secondary" title="Als JSON-Datei exportieren">
+                    <span>📤</span> Export
+                </button>
+                <button type="button" id="btn-load-trigger" class="btn-secondary" title="JSON-Datei importieren">
+                    <span>📂</span> Import
+                </button>
+                <div class="button-divider"></div>
+                <button type="button" id="btn-clear-cache" class="btn-danger-small"
+                    title="Alle gespeicherten Projekte im Browser löschen">
+                    <span>🗑️</span> Cache leeren
+                </button>
+                <input type="file" id="project-file-input" style="display:none" accept=".json">
+            </div>
+        </div>
+
+        <form id="calc-form" class="calc-form" novalidate autocomplete="off">
+            <!-- Schritt 0: Wasserinhalt -->
+            <div class="card param-card input-section" style="margin-bottom: 4rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2><span>💧</span> Anlage - Wasserinhalt (Vs)</h2>
+                    <button type="button" class="btn-secondary" onclick="openReferenceModal()"
+                        style="padding: 0.4rem 0.8rem; font-size: 0.75rem; border-color: var(--accent); color: var(--accent); background: rgba(0,255,135,0.05); display: flex; align-items: center; gap: 0.5rem; margin-top: -10px;">
+                        <span style="font-size: 1rem;">🔍</span> Referenz-Check (IMI)
+                    </button>
+                </div>
+                <p class="settings-intro">Bestimmen Sie das totale Volumen der Anlage. Sie können zwischen einer
+                    Schätzung nach IMI-Tabelle oder einer detaillierten Erfassung wählen. Erfahrungswete inkl. Leitungen
+                </p>
+
+                <div class="variant-toggle"
+                    style="margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 0.8rem 1rem; border-radius: 12px; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 1.5rem;">
+                        <div id="v1-details-toggle"
+                            style="cursor: pointer; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); width: 32px; height: 32px; border-radius: 6px; color: var(--accent);"
+                            onclick="toggleV1Details()">
+                            <span id="v1-details-toggle-icon"
+                                style="transition: transform 0.3s ease; display: inline-block; transform: rotate(-90deg);">▼</span>
+                        </div>
+                        <label style="cursor: pointer; display: flex; align-items: center; gap: 0.8rem; margin: 0;">
+                            <input type="radio" name="vs-variant" value="v1" checked onchange="handleVsCalculation();">
+                            <span style="font-weight: 600;">Var. 1: Schätzung [ℓ/kW]</span>
+                        </label>
+                    </div>
+                    <!-- Q Summary for V1 -->
+                    <div id="v1-q-sync-header" class="q-summary-header"
+                        style="display: flex; align-items: center; gap: 0.8rem; background: rgba(0,255,135,0.05); padding: 0.3rem 0.8rem; border-radius: 6px; border: 1px solid rgba(0,255,135,0.1);">
+                        <span style="font-size: 0.75rem; color: var(--accent); white-space: nowrap;">Inst. Leistung Q
+                            Var. 1:</span>
+                        <span id="v1-q-sum-display" style="font-size: 1rem; font-weight: 800; color: #fff;">0 kW</span>
+                    </div>
+                </div>
+
+                <!-- Variant 1: Estimation -->
+                <div id="vs-variant-1">
+                    <div id="v1-details-collapsible" class="hidden-section"
+                        style="transition: all 0.3s ease; overflow: hidden;">
+                        <div class="v1-items-list mt-1">
+                            <!-- Radiators -->
+                            <div class="calc-row v1-item" data-type="radiators">
+                                <div class="v1-label">Radiatoren</div>
+                                <select class="v1-temp-select" tabindex="-1"
+                                    onkeydown="event.preventDefault(); this.blur(); return false;"
+                                    onchange="this.blur();">
+                                    <option value="90|70">90|70°</option>
+                                    <option value="80|60">80|60°</option>
+                                    <option value="70|55">70|55°</option>
+                                    <option value="70|50">70|50°</option>
+                                    <option value="60|40">60|40°</option>
+                                    <option value="50|40">50|40°</option>
+                                </select>
+                                <input type="text" inputmode="decimal" class="v1-input-q" placeholder="Q [kW]" min="0">
+                                <div class="v1-calc-info"><span>0</span> ℓ/kW &times; <span>0</span> kW =
+                                    <strong>0</strong>
+                                    ℓ
+                                </div>
+                            </div>
+                            <!-- Panels -->
+                            <div class="calc-row v1-item" data-type="panels">
+                                <div class="v1-label">Plattenheizkörper</div>
+                                <select class="v1-temp-select" tabindex="-1"
+                                    onkeydown="event.preventDefault(); this.blur(); return false;"
+                                    onchange="this.blur();">
+                                    <option value="90|70">90|70°</option>
+                                    <option value="80|60">80|60°</option>
+                                    <option value="70|55">70|55°</option>
+                                    <option value="70|50">70|50°</option>
+                                    <option value="60|40">60|40°</option>
+                                    <option value="50|40">50|40°</option>
+                                </select>
+                                <input type="text" inputmode="decimal" class="v1-input-q" placeholder="Q [kW]" min="0">
+                                <div class="v1-calc-info"><span>0</span> ℓ/kW &times; <span>0</span> kW =
+                                    <strong>0</strong>
+                                    ℓ
+                                </div>
+                            </div>
+                            <!-- Convectors -->
+                            <div class="calc-row v1-item" data-type="convectors">
+                                <div class="v1-label">Konvektoren</div>
+                                <select class="v1-temp-select" tabindex="-1"
+                                    onkeydown="event.preventDefault(); this.blur(); return false;"
+                                    onchange="this.blur();">
+                                    <option value="90|70">90|70°</option>
+                                    <option value="80|60">80|60°</option>
+                                    <option value="70|55">70|55°</option>
+                                    <option value="70|50">70|50°</option>
+                                    <option value="60|40">60|40°</option>
+                                    <option value="50|40">50|40°</option>
+                                </select>
+                                <input type="text" inputmode="decimal" class="v1-input-q" placeholder="Q [kW]" min="0">
+                                <div class="v1-calc-info"><span>0</span> ℓ/kW &times; <span>0</span> kW =
+                                    <strong>0</strong>
+                                    ℓ
+                                </div>
+                            </div>
+                            <!-- Ventilation -->
+                            <div class="calc-row v1-item" data-type="ventilation">
+                                <div class="v1-label">Lüftung</div>
+                                <select class="v1-temp-select" tabindex="-1"
+                                    onkeydown="event.preventDefault(); this.blur(); return false;"
+                                    onchange="this.blur();">
+                                    <option value="90|70">90|70°</option>
+                                    <option value="80|60">80|60°</option>
+                                    <option value="70|55">70|55°</option>
+                                    <option value="70|50">70|50°</option>
+                                    <option value="60|40">60|40°</option>
+                                    <option value="50|40">50|40°</option>
+                                </select>
+                                <input type="text" inputmode="decimal" class="v1-input-q" placeholder="Q [kW]" min="0">
+                                <div class="v1-calc-info"><span>0</span> ℓ/kW &times; <span>0</span> kW =
+                                    <strong>0</strong>
+                                    ℓ
+                                </div>
+                            </div>
+                            <!-- Floor Heating -->
+                            <div class="calc-row v1-item" data-type="floor">
+                                <div class="v1-label">Fussbodenhzg.</div>
+                                <select class="v1-temp-select" tabindex="-1"
+                                    onkeydown="event.preventDefault(); this.blur(); return false;"
+                                    onchange="this.blur();">
+                                    <option value="90|70">90|70°</option>
+                                    <option value="80|60">80|60°</option>
+                                    <option value="70|55">70|55°</option>
+                                    <option value="70|50">70|50°</option>
+                                    <option value="60|40">60|40°</option>
+                                    <option value="50|40">50|40°</option>
+                                    <option value="40|30" selected>40|30°</option>
+                                    <option value="35|28">35|28°</option>
+                                </select>
+                                <input type="text" inputmode="decimal" class="v1-input-q" placeholder="Q [kW]" min="0">
+                                <div class="v1-calc-info"><span>0</span> ℓ/kW &times; <span>0</span> kW =
+                                    <strong>0</strong>
+                                    ℓ
+                                </div>
+                            </div>
+                            <!-- Custom V1 Items -->
+                            <p style="font-size: 0.75rem; color: #aaa; margin-top: 1.5rem; margin-bottom: 0.5rem; font-style: italic; opacity: 0.8;">
+                                Die IMI APP verwendet andere Werte als die, die in der IMI-Dokumentation beschrieben sind. In der App sind sie je nach Temp. dynamisch.
+                            </p>
+                            <div id="v1-custom-items-container">
+                                <!-- Dynamic custom rows -->
+                            </div>
+                        </div>
+
+                        <div class="add-btn-wrapper" style="margin-top: 1rem;">
+                            <button type="button" class="btn-secondary" onclick="addV1CustomItemRow()"
+                                style="padding: 0.5rem 1rem;">+ Spez. Heizfläche (ℓ/kW)</button>
+                        </div>
+
+
+                        <!-- Detailed Pipes for V1 -->
+                        <h3 style="margin-top: 1rem; font-size: 0.9rem;">Rohrleitungen</h3>
+                        <div id="v1-pipe-list">
+                            <!-- Pipe rows injected here -->
+                        </div>
+                        <div class="add-btn-wrapper" style="margin-bottom: 1rem;">
+                            <button type="button" class="btn-secondary" id="btn-v1-add-pipe"
+                                style="padding: 0.5rem 1rem;">+
+                                Rohrleitung</button>
+                        </div>
+
+                        <!-- Additional Apparatus for V1 -->
+                        <h3 style="margin-top: 1rem; font-size: 0.9rem;">Zus. Volumen</h3>
+                        <div id="v1-apparatus-list">
+                            <!-- Custom rows will be injected here -->
+                        </div>
+                        <div class="add-btn-wrapper">
+                            <button type="button" class="btn-secondary" id="btn-v1-add-apparatus"
+                                style="padding: 0.5rem 1rem;">+ Zus. Vol. hinzufügen</button>
+                        </div>
+
+                        <h3
+                            style="margin-top: 2rem; font-size: 0.9rem; display: flex; align-items: center; gap: 0.6rem; user-select: none;">
+                            Zentrale: Kessel / Speicher (Vhs)
+                        </h3>
+
+                        <!-- Vhs placement for V1 -->
+                        <div id="v1-vhs-collapsible" style="transition: all 0.3s ease; overflow: hidden;">
+                            <div class="result-band mt-1"
+                                style="border-color: var(--accent); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem;">
+                                <!-- Generators (Moved to Left) -->
+                                <div id="v1-vhs-generators"
+                                    style="flex: 2; display: flex; flex-direction: column; gap: 0.5rem; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 1rem;">
+                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <button type="button" class="btn-secondary"
+                                            style="padding: 0.2rem 0.6rem; font-size: 0.7rem; align-self: flex-start; background: rgba(255,255,255,0.05);"
+                                            onclick="addVhsGeneratorRow('v1')">+ Wärmeerzeuger Typ [ℓ/kW]</button>
+                                        <button type="button" class="btn-secondary"
+                                            style="padding: 0.2rem 0.6rem; font-size: 0.7rem; align-self: flex-start; background: rgba(255,255,255,0.05);"
+                                            onclick="window.addVhsCustomGeneratorRow('v1')">+ Spez. Erzeuger</button>
+                                        <button type="button" class="btn-secondary"
+                                            style="padding: 0.2rem 0.6rem; font-size: 0.7rem; align-self: flex-start; background: rgba(255,255,255,0.05);"
+                                            onclick="addVhsStorageRow('v1')">+ Speicher</button>
+                                    </div>
+                                    <div class="vhs-gen-rows"
+                                        style="display: flex; flex-direction: column; gap: 0.3rem;">
+                                        <div class="vhs-gen-row"
+                                            style="display: flex; align-items: center; gap: 0.4rem;">
+                                            <select class="gen-type"
+                                                style="flex: 1.5; font-size: 0.75rem; padding: 0.1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff;"
+                                                onchange="window.calculateVariantVhs('v1')">
+                                                <option value="1.5">Gusskessel</option>
+                                                <option value="1.0">Stahlkessel</option>
+                                                <option value="0.2">Wandtherme <= 0.2 ℓ/kW</option>
+                                                <option value="0.6">Wärmetauscher</option>
+                                                <option value="0.6">BHKW</option>
+                                                <option value="0.6">Wärmepumpe</option>
+                                            </select>
+                                            <div style="position: relative; flex: 0.8; display: flex;">
+                                                <input type="text" inputmode="decimal" class="gen-power"
+                                                    placeholder="kW"
+                                                    style="width: 100%; font-size: 0.8rem; padding: 0.1rem; padding-right: 1.2rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff; text-align: center;"
+                                                    oninput="window.calculateVariantVhs('v1')">
+                                                <span class="unit-tag"
+                                                    style="font-size: 0.65rem; right: 3px; position: absolute; top: 50%; transform: translateY(-50%); opacity: 0.7; pointer-events: none;">kW</span>
+                                            </div>
+                                            <button type="button"
+                                                style="background:none; border:none; color:var(--danger); cursor:pointer; font-size: 1rem; padding: 0;"
+                                                onclick="window.removeVhsGeneratorRow(this, 'v1')">&times;</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Manual Input (Moved to Right) -->
+                                <div style="flex-grow: 1;">
+                                    <div
+                                        style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; margin-bottom: 0.8rem;">
+                                        <label for="vol-vhs"
+                                            style="color: var(--accent); font-weight: 700; font-size: 1.1rem; margin: 0;">Andere:</label>
+                                        <a href="javascript:void(0)" onclick="openNormModal()"
+                                            style="color: var(--text-muted); text-decoration: none; font-size: 0.78rem; border-bottom: 1px dashed var(--text-muted); transition: color 0.2s; white-space: nowrap;">ℹ️
+                                            Info zur SWKI-Berechnung</a>
+                                    </div>
+                                    <div class="input-group" style="max-width: 140px; position: relative;">
+                                        <input type="text" id="vol-vhs" class="vhs-input" value=""
+                                            placeholder="z.B. 20+30" autocomplete="off"
+                                            oninput="window.updateVhsDisplay(this); if (typeof handleVsCalculation === 'function') handleVsCalculation();"
+                                            onchange="window.finalizeVhsInput(this)"
+                                            onkeydown="window.catchVhsEnter(event, this)"
+                                            style="border-color: rgba(0,255,135,0.4); background: rgba(0,0,0,0.3); font-size: 1.1rem; font-weight: 700; text-align: left; padding-right: 30px;">
+                                        <span class="unit-tag"
+                                            style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.9rem; opacity: 0.7; color: var(--accent);">ℓ</span>
+                                    </div>
+                                </div>
+
+                                <div class="vhs-total-display" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.1rem;">
+                                    <div id="v1-vhs-erzeuger-line" style="font-size: 0.75rem; color: var(--text-muted); opacity: 0.8; display: none;">
+                                        Erzeuger: <span id="v1-vhs-erzeuger-val">0</span> ℓ
+                                    </div>
+                                    <div id="v1-vhs-speicher-line" style="font-size: 0.75rem; color: var(--text-muted); opacity: 0.8; display: none;">
+                                        Speicher: <span id="v1-vhs-speicher-val">0</span> ℓ
+                                    </div>
+                                    <div class="res-val" style="font-size: 2.2rem; white-space: nowrap; margin-top: -0.2rem;">
+                                        <span id="vhs-res-v1">0</span> ℓ
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="result-band" id="v1-band"
+                            style="border-color: var(--accent); margin-top: 1.5rem; padding: 1.5rem; background: rgba(0,255,135,0.05);">
+                            <span class="res-label" style="font-size: 1.2rem;">Gesamt-Systemvolumen Vs [ℓ] (1):</span>
+                            <div class="res-val" style="font-size: 2.2rem; color: var(--accent);"><span
+                                    id="v1-result-val">0</span> ℓ</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="variant-toggle"
+                    style="margin-top: 1rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 0.8rem 1rem; border-radius: 12px; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 1.5rem;">
+                        <div id="v2-details-toggle"
+                            style="cursor: pointer; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); width: 32px; height: 32px; border-radius: 6px; color: var(--accent);"
+                            onclick="toggleV2Details()">
+                            <span id="v2-details-toggle-icon"
+                                style="transition: transform 0.3s ease; display: inline-block; transform: rotate(-90deg);">▼</span>
+                        </div>
+                        <label style="cursor: pointer; display: flex; align-items: center; gap: 0.8rem; margin: 0;">
+                            <input type="radio" name="vs-variant" value="v2" onchange="handleVsCalculation();">
+                            <span style="font-weight: 600;">Var. 2: Detailliert</span>
+                        </label>
+                    </div>
+                    <!-- Q Summary for V2 -->
+                    <div id="v2-q-sync-header" class="q-summary-header"
+                        style="display: flex; align-items: center; gap: 0.8rem; background: rgba(59, 130, 246, 0.05); padding: 0.3rem 0.8rem; border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.1);">
+                        <span style="font-size: 0.75rem; color: #60a5fa; white-space: nowrap;">Inst. Leistung Q Var.
+                            2:</span>
+                        <span id="v2-q-sum-display" style="font-size: 1rem; font-weight: 800; color: #fff;">0 kW</span>
+                    </div>
+                </div>
+
+                <!-- Variant 2: Detailed -->
+                <div id="vs-variant-2" class="hidden">
+                    <div id="v2-details-collapsible" class="hidden-section"
+                        style="transition: all 0.3s ease; overflow: hidden;">
+                        <h3 style="margin-top: 1rem; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 0.8rem; user-select: none;"
+                            onclick="togglePipes()">
+                            <span id="pipes-toggle-icon"
+                                style="transition: transform 0.3s ease; display: inline-block; transform: rotate(-90deg);">▼</span>
+                            Rohrleitungen
+                        </h3>
+
+                        <div id="pipes-collapsible" class="is-compact-mode"
+                            style="transition: all 0.3s ease; overflow: hidden;">
+                            <div class="v2-header mt-1"
+                                style="display: flex; gap: 0.8rem; font-size: 0.8rem; color: var(--text-muted); padding: 0 0.5rem; margin-bottom: 0.5rem;">
+                                <span style="flex: 2;">Dimension (DN)</span>
+                                <span style="flex: 1;">Rohrlänge [m]</span>
+                                <span style="flex: 0 0 80px; text-align: right;">Inhalt [ℓ]</span>
+                                <span style="flex: 0 0 38px;"></span>
+                            </div>
+                            <div id="pipe-rows-container">
+                                <!-- Dynamic rows here -->
+                            </div>
+                        </div>
+                        <div class="add-btn-wrapper" style="display: flex; gap: 0.8rem; margin-bottom: 1rem;">
+                            <button type="button" id="btn-add-pipe" class="btn-secondary"
+                                style="padding: 0.5rem 1rem;">+
+                                Leitung hinzufügen</button>
+                            <button type="button" id="btn-add-pipe-spec" class="btn-secondary"
+                                style="padding: 0.5rem 1rem;">+ spez. Ø</button>
+                        </div>
+
+                        <h3 style="margin-top: 1rem; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;"
+                            onclick="toggleApparatus()">
+                            <span id="app-toggle-icon"
+                                style="transition: transform 0.3s ease; display: inline-block; transform: rotate(-90deg);">▼</span>
+                            Zus. Volumen
+                        </h3>
+                        <div id="app-collapsible" class="hidden-section"
+                            style="transition: all 0.3s ease; overflow: hidden;">
+                            <div id="app-rows-container">
+                                <!-- Dynamic rows here -->
+                            </div>
+                        </div>
+                        <div class="add-btn-wrapper">
+                            <button type="button" id="btn-add-app" class="btn-secondary" style="padding: 0.5rem 1rem;">+
+                                Zus. Vol. hinzufügen</button>
+                        </div>
+
+
+                        <h3
+                            style="margin-top: 2rem; font-size: 0.9rem; display: flex; align-items: center; gap: 0.6rem; user-select: none;">
+                            Zentrale: Kessel / Speicher (Vhs)
+                        </h3>
+                        <!-- Vhs placement for V2 -->
+                        <div id="v2-vhs-collapsible" style="transition: all 0.3s ease; overflow: hidden;">
+                            <div class="result-band mt-1"
+                                style="border-color: var(--accent); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem;">
+                                <!-- Generators (Moved to Left) -->
+                                <div id="v2-vhs-generators"
+                                    style="flex: 2; display: flex; flex-direction: column; gap: 0.5rem; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 1rem;">
+                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <button type="button" class="btn-secondary"
+                                            style="padding: 0.2rem 0.6rem; font-size: 0.7rem; align-self: flex-start; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);"
+                                            onclick="addVhsGeneratorRow('v2')">+ Wärmeerzeuger Typ (ℓ/kW)</button>
+                                        <button type="button" class="btn-secondary"
+                                            style="padding: 0.2rem 0.6rem; font-size: 0.7rem; align-self: flex-start; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);"
+                                            onclick="window.addVhsCustomGeneratorRow('v2')">+ Spez. Erzeuger</button>
+                                        <button type="button" class="btn-secondary"
+                                            style="padding: 0.2rem 0.6rem; font-size: 0.7rem; align-self: flex-start; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);"
+                                            onclick="addVhsStorageRow('v2')">+ Speicher</button>
+                                    </div>
+                                    <div class="vhs-gen-rows"
+                                        style="display: flex; flex-direction: column; gap: 0.3rem;">
+                                        <div class="vhs-gen-row"
+                                            style="display: flex; align-items: center; gap: 0.4rem;">
+                                            <select class="gen-type"
+                                                style="flex: 1.5; font-size: 0.75rem; padding: 0.1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff;"
+                                                onchange="window.calculateVariantVhs('v2')">
+                                                <option value="1.5">Gusskessel</option>
+                                                <option value="1.0">Stahlkessel</option>
+                                                <option value="0.2">Wandtherme <= 0.2 ℓ/kW</option>
+                                                <option value="0.6">Wärmetauscher</option>
+                                                <option value="0.6">BHKW</option>
+                                                <option value="0.6">Wärmepumpe</option>
+                                            </select>
+                                            <div style="position: relative; flex: 0.8; display: flex;">
+                                                <input type="text" inputmode="decimal" class="gen-power"
+                                                    placeholder="kW"
+                                                    style="width: 100%; font-size: 0.8rem; padding: 0.1rem; padding-right: 1.2rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff; text-align: center;"
+                                                    oninput="window.calculateVariantVhs('v2')">
+                                                <span class="unit-tag"
+                                                    style="font-size: 0.65rem; right: 3px; position: absolute; top: 50%; transform: translateY(-50%); opacity: 0.7; pointer-events: none;">kW</span>
+                                            </div>
+                                            <button type="button"
+                                                style="background:none; border:none; color:var(--danger); cursor:pointer; font-size: 1rem; padding: 0;"
+                                                onclick="window.removeVhsGeneratorRow(this, 'v2')">&times;</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Manual Input (Moved to Right) -->
+                                <div style="flex-grow: 1;">
+                                    <div
+                                        style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; margin-bottom: 0.8rem;">
+                                        <label for="vol-vhs-v2-proxy"
+                                            style="color: var(--accent); font-weight: 700; font-size: 1.1rem; margin: 0;">Andere:</label>
+                                        <a href="javascript:void(0)" onclick="openNormModal()"
+                                            style="color: var(--text-muted); text-decoration: none; font-size: 0.78rem; border-bottom: 1px dashed var(--text-muted); transition: color 0.2s; white-space: nowrap;">ℹ️
+                                            Info zur SWKI-Berechnung</a>
+                                    </div>
+                                    <div class="input-group" style="max-width: 140px; position: relative;">
+                                        <input type="text" id="vol-vhs-v2-proxy" class="vhs-input" value=""
+                                            placeholder="z.B. 20+30" autocomplete="off"
+                                            oninput="window.updateVhsDisplay(this); if (typeof handleVsCalculation === 'function') handleVsCalculation();"
+                                            onchange="window.finalizeVhsInput(this)"
+                                            onkeydown="window.catchVhsEnter(event, this)"
+                                            style="border-color: rgba(59, 130, 246, 0.4); background: rgba(0,0,0,0.3); font-size: 1.1rem; font-weight: 700; text-align: left; padding-right: 30px;">
+                                        <span class="unit-tag"
+                                            style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.9rem; opacity: 0.7; color: var(--accent);">ℓ</span>
+                                    </div>
+                                </div>
+
+                                <div class="vhs-total-display" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.1rem;">
+                                    <div id="v2-vhs-erzeuger-line" style="font-size: 0.75rem; color: var(--text-muted); opacity: 0.8; display: none;">
+                                        Erzeuger: <span id="v2-vhs-erzeuger-val">0</span> ℓ
+                                    </div>
+                                    <div id="v2-vhs-speicher-line" style="font-size: 0.75rem; color: var(--text-muted); opacity: 0.8; display: none;">
+                                        Speicher: <span id="v2-vhs-speicher-val">0</span> ℓ
+                                    </div>
+                                    <div class="res-val" style="font-size: 2.2rem; white-space: nowrap; margin-top: -0.2rem;">
+                                        <span id="vhs-res-v2">0</span> ℓ
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="result-band" id="v2-band"
+                            style="padding: 1.5rem; margin-top: 1.5rem; background: rgba(0,255,135,0.05);">
+                            <span class="res-label" style="font-size: 1.2rem;">Gesamt-Systemvolumen Vs [ℓ] (2):</span>
+                            <div class="res-val" style="font-size: 2.2rem; color: var(--accent);"><span
+                                    id="v2-result-val">0</span> ℓ</div>
+                        </div>
+                </div>
+            </div>
+
+            <!-- Schritt 1: Absicherung & Sicherheitsventil -->
+            <div class="card param-card input-section">
+                <h2>Schritt 1: Absicherung & Sicherheitsventil</h2>
+                <div class="safety-grid-3">
+                    <!-- Row 1: Primary Selects & X Factor -->
+                    <div class="input-group">
+                        <label for="system-type">Anlagentyp</label>
+                        <select id="system-type" name="system-type">
+                            <option value="heating">Heizung</option>
+                            <option value="cooling">Kälte</option>
+                            <option value="geothermal">Erdsondenanlage</option>
+                            <option value="heatpump">Wärmepumpe</option>
+                            <option value="dh">Fernwärme</option>
+                            <option value="solar">Solar</option>
+                        </select>
+                    </div>
+
+                    <div class="sf-center-box">
+                        <label>Sicherheitsfaktor X</label>
+                        <div id="display-factor-x">1.50</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="fluid-type">Medium</label>
+                        <select id="fluid-type" name="fluid-type">
+                            <option value="Water">Wasser (0% Glykol)</option>
+                            <option value="MEG30">30% MEG (-14.5 °C)</option>
+                            <option value="MEG40">40% MEG (-23.9 °C)</option>
+                            <option value="MEG50">50% MEG (-35.6 °C)</option>
+                            <option value="MPG30">30% MPG (-12.9 °C)</option>
+                            <option value="MPG40">40% MPG (-20.9 °C)</option>
+                            <option value="MPG50">50% MPG (-33.2 °C)</option>
+                        </select>
+                    </div>
+
+                    <!-- Row 2: Basic physical parameters -->
+                    <div class="input-group">
+                        <label for="height-hst">Statische Höhe Hst</label>
+                        <div class="input-wrapper">
+                            <input type="text" inputmode="decimal" id="height-hst" step="0.1" required>
+                            <span class="unit-tag">m</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="temp-smax">Max. Sys. tsmax</label>
+                        <div class="input-wrapper">
+                            <input type="text" inputmode="decimal" id="temp-smax" step="0.1" required>
+                            <span class="unit-tag">°C</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="temp-r">Rücklauftemp. tr</label>
+                        <div class="input-wrapper">
+                            <input type="text" inputmode="decimal" id="temp-r" step="0.1" required>
+                            <span class="unit-tag">°C</span>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Detail physical parameters & Safety -->
+                    <div class="input-group">
+                        <label for="power-q">Inst. Leistung Q</label>
+                        <div class="input-wrapper"
+                            style="position: relative; display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="text" id="power-q" placeholder="" step="0.1" required style="flex-grow: 1;">
+                            <span class="unit-tag">kW</span>
+                            <button type="button" id="btn-reset-power-q" class="btn-secondary"
+                                style="display: none; font-size: 0.78rem; padding: 0.35rem 0.7rem; opacity: 0.8; white-space: nowrap; transition: 0.2s;">↺
+                                Auto</button>
+                        </div>
+                        <span id="q-sync-hint" class="hint-small" style="display:none; line-height: 1.2;"></span>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="press-pz">Min. Zulaufdruck pz</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="press-pz" value="0.5" placeholder="0.5" step="0.1" required>
+                            <span class="unit-tag">bar</span>
+                        </div>
+                        <span class="hint">Für Pumpe/Kessel<br>
+                            <span style="color: #FFA500; font-weight: 600;">Besonders wichtig bei Hohen Betr. Temp</span><br>
+                            <span style="font-size: 0.75rem; opacity: 0.8;">(Durch Unterdruck Steigt Temp. Dampfbildung möglich)</span>
+                        </span>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="press-psvs">Gew. Ansprechdruck psvs</label>
+                        <div class="field-with-addon">
+                            <select id="press-psvs" name="press-psvs">
+                                <option value="2.0">2.0</option>
+                                <option value="2.5">2.5</option>
+                                <option value="3.0" selected>3.0</option>
+                                <option value="3.5">3.5</option>
+                                <option value="4.0">4.0</option>
+                                <option value="4.5">4.5</option>
+                                <option value="5.0">5.0</option>
+                                <option value="5.5">5.5</option>
+                                <option value="6.0">6.0</option>
+                                <option value="7.0">7.0</option>
+                                <option value="8.0">8.0</option>
+                                <option value="9.0">9.0</option>
+                                <option value="10.0">10.0</option>
+                            </select>
+                            <button type="button" id="btn-psvs-auto" class="btn-addon-auto"
+                                title="Automatisch auf Mindestwert setzen">Auto</button>
+                        </div>
+                        <span id="psvs-min-hint" class="hint-small">Min: -- bar</span>
+                    </div>
+
+                    <div class="input-group" id="grp-vgsolar"
+                        style="display: none; grid-column: 1 / -1; margin-top: 1rem;">
+                        <label for="vol-vgsolar">Kollektorenvolumen Vg</label>
+                        <div class="input-wrapper" style="max-width: 300px;">
+                            <input type="text" inputmode="decimal" id="vol-vgsolar" step="0.1" value="0">
+                            <span class="unit-tag">ℓ</span>
+                        </div>
+                        <span class="hint">Nach SWKI HE301-01 (2x Zuschlag)</span>
+                    </div>
+
+                    <!-- Safety Margin Selection (Sicherheitszuschläge) -->
+                    <div class="safety-margins-selection"
+                        style="grid-column: 1 / -1; margin-top: 1.5rem; padding: 1.2rem; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <label
+                            style="display: block; margin-bottom: 1rem; font-weight: 700; color: var(--accent); font-size: 0.95rem;">
+                            🛡️ Sicherheitszuschläge
+                        </label>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+                            <label class="checkbox-label"
+                                style="display: flex; align-items: center; gap: 0.8rem; cursor: pointer; font-size: 0.85rem;">
+                                <input type="checkbox" id="margin-p0" value="0.3" onchange="autoRefreshSV()">
+                                <span class="custom-check"></span>
+                                <span>+0.3 bar Überdruck am höchsten Anlagepunkt</span>
+                            </label>
+                            <label class="checkbox-label"
+                                style="display: flex; align-items: center; gap: 0.8rem; cursor: pointer; font-size: 0.85rem;">
+                                <input type="checkbox" id="margin-pa" value="0.3" checked onchange="autoRefreshSV()">
+                                <span class="custom-check"></span>
+                                <span>+0.3 bar Wasservorlage (p<sub>a</sub>)</span>
+                            </label>
+                            <label class="checkbox-label"
+                                style="display: flex; align-items: center; gap: 0.8rem; cursor: pointer; font-size: 0.85rem;">
+                                <input type="checkbox" id="margin-pe" value="0.2" onchange="autoRefreshSV()">
+                                <span class="custom-check"></span>
+                                <span>+0.2 bar Arbeitsbereich (p<sub>e</sub>) Druckautomat</span>
+                            </label>
+                        </div>
+                        <div
+                            style="margin-top: 1rem; padding-top: 0.8rem; border-top: 1px dashed rgba(255,255,255,0.1); font-size: 0.8rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;">
+                            <span>Gewählter Gesamtzuschlag zur statischen Höhe:</span>
+                            <span id="margin-total-display"
+                                style="font-weight: 700; color: var(--accent); font-size: 1rem;">0.3 bar</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sv-info-box" id="sv-recommendation"
+                style="margin-top: 1.5rem; padding: 1.2rem; background: rgba(0, 228, 161, 0.05); border: 1px solid rgba(0, 228, 161, 0.3); border-radius: 8px;">
+                Sicherheitsventil wird berechnet...
+            </div>
+
+            <!-- Schritt 2: Ausdehnungsgefäss -->
+            <div class="card param-card input-section">
+                <h2>Schritt 2: Ausdehnungsgefäss</h2>
+                <div class="grid-2">
+
+
+                    <div class="input-group" id="group-vol-vs">
+                        <label for="vol-vs"
+                            style="letter-spacing: 0.02em; margin-bottom: 0.5rem; display: block; font-weight: 700;">Anlage
+                            Wasserinhalt Vs [ℓ]</label>
+                        <div style="position: relative; display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="text" inputmode="decimal" id="vol-vs" step="1" min="0" required
+                                style="border-color: var(--accent); background: rgba(0, 228, 161, 0.05); flex-grow: 1; transition: background 0.2s, border-color 0.2s;">
+                            <button type="button" id="btn-reset-vs" class="btn-secondary"
+                                style="display: none; font-size: 0.78rem; padding: 0.35rem 0.7rem; opacity: 0.8; white-space: nowrap; transition: 0.2s;">↺
+                                Auto</button>
+                        </div>
+                    </div>
+
+
+
+                    <div class="input-group">
+                        <label for="vento-installed">Vento Entgasung installiert?</label>
+                        <select id="vento-installed" name="vento-installed">
+                            <option value="no">Nein</option>
+                            <option value="yes">Ja (+2 Liter Zuschlag)</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group" style="grid-column: 1 / -1; margin-top: 0.5rem;">
+                        <label style="font-size:1.1rem; color:var(--accent); margin-bottom: 1rem;">Bevorzugt</label>
+                        <div class="checkbox-wrapper"
+                            style="display: flex; flex-direction: column; gap: 1.5rem; background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+
+                            <!-- Statico -->
+                            <div class="fav-option">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="fav-statico">
+                                    <span class="custom-check"></span>
+                                    Statico
+                                </label>
+                                <div id="grp-statico-vordruck" class="nested-select"
+                                    style="margin-top: 0.8rem; margin-left: 2.2rem; display: none;">
+                                    <!-- Row 1: Read-only factory default -->
+                                    <div
+                                        style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.8rem;">
+                                        <label style="font-size: 0.8rem; opacity: 0.7; margin: 0;">Werkseitiger Vordruck
+                                            (p₀)</label>
+                                        <input type="text" id="statico-p0-factory" readonly
+                                            style="width: 130px; background: rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.05); color: #00FF87; font-weight: bold; text-align: center; cursor: not-allowed;"
+                                            placeholder="-">
+                                    </div>
+                                    <div
+                                        style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                                        <label for="statico-vordruck"
+                                            style="font-size: 0.8rem; opacity: 0.7; margin: 0; letter-spacing: 0.02em;">Gewünschter
+                                            Vordruck p₀ [bar]</label>
+                                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                            <div class="input-group" style="max-width: 130px; flex-shrink: 0;">
+                                                <input type="text" inputmode="decimal" id="statico-vordruck"
+                                                    placeholder="Auto (p₀)"
+                                                    style="padding: 0.4rem 2rem 0.4rem 0.6rem; font-size: 0.9rem;">
+                                                <span class="unit-tag" style="font-size: 0.8rem;">bar</span>
+                                            </div>
+                                            <button type="button" id="btn-reset-statico-vordruck" class="btn-secondary"
+                                                style="font-size: 0.78rem; padding: 0.35rem 0.7rem; opacity: 0.8;">
+                                                ↺ Standard
+                                            </button>
+                                            <span id="statico-vordruck-hint"
+                                                style="font-size: 0.75rem; color: var(--text-muted); white-space: nowrap;">
+                                                = p₀ (aus Hst)
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Simply -->
+                            <div class="fav-option">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="fav-simply" checked>
+                                    <span class="custom-check"></span>
+                                    Simply Compresso (bis 4 bar)
+                                </label>
+                                <div id="grp-nachspeisung" class="nested-select"
+                                    style="margin-top: 0.8rem; margin-left: 2.2rem;">
+                                    <div
+                                        style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                                        <label for="makeup-water"
+                                            style="font-size: 0.8rem; opacity: 0.7; margin: 0; letter-spacing: 0.02em;">Nachspeisung</label>
+                                        <select id="makeup-water" name="makeup-water"
+                                            style="padding: 0.4rem; font-size: 0.9rem; flex-grow: 1; max-width: 300px;">
+                                            <option value="S">Normal (S Modell)</option>
+                                            <option value="SWM">Zählwerk & Ventil (SWM Modell)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Connect -->
+                            <div class="fav-option">
+                                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="fav-connectf" checked>
+                                        <span class="custom-check"></span>
+                                        Connect F
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="fav-connect-floor">
+                                        <span class="custom-check"></span>
+                                        Connect
+                                    </label>
+                                </div>
+                                <div id="grp-vessel-series" class="nested-select"
+                                    style="margin-top: 0.8rem; margin-left: 2.2rem;">
+                                    <div
+                                        style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                                        <label for="vessel-series"
+                                            style="font-size: 0.8rem; opacity: 0.7; margin: 0; letter-spacing: 0.02em;">Gefäss-Serie</label>
+                                        <select id="vessel-series" name="vessel-series"
+                                            style="padding: 0.4rem; font-size: 0.9rem; flex-grow: 1; max-width: 300px;">
+                                            <option value="CU">CU (Standard, ohne Beschichtung)</option>
+                                            <option value="CG">CG (Mit interner Beschichtung)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Transfero -->
+                            <div class="fav-option">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="fav-transfero">
+                                    <span class="custom-check"></span>
+                                    Transfero Connect (Pumpenstation)
+                                </label>
+                                <div id="grp-transfero-series" class="nested-select"
+                                    style="margin-top: 0.8rem; margin-left: 2.2rem;">
+                                    <div
+                                        style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                                        <label for="transfero-series"
+                                            style="font-size: 0.8rem; opacity: 0.7; margin: 0; letter-spacing: 0.02em;">Gefäss-Serie</label>
+                                        <select id="transfero-series" name="transfero-series"
+                                            style="padding: 0.4rem; font-size: 0.9rem; flex-grow: 1; max-width: 300px;">
+                                            <option value="TU">TU (Standard, ohne Beschichtung)</option>
+                                            <option value="TG">TG (Mit interner Beschichtung)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <div class="button-wrapper">
+                <button type="submit" id="btn-calc" class="btn-primary">
+                    <span class="btn-text">Start</span>
+                    <span class="btn-icon">→</span>
+                </button>
+            </div>
+        </form>
+
+        <div id="results" class="results-container hidden">
+            <div class="card results-card">
+                <h2>Ergebnisse nach SWKI HE301-01</h2>
+
+                <div class="result-grid">
+                    <div class="res-item">
+                        <span class="res-label">Ausdehnungsvolumen Ve [ℓ]</span>
+                        <div class="res-val"><span id="res-ve">0</span> ℓ</div>
+                    </div>
+                    <div class="res-item">
+                        <span class="res-label">Koeffizient (X)</span>
+                        <div class="res-val"><span id="res-x">0</span></div>
+                    </div>
+
+                    <div class="res-item active">
+                        <span class="res-label">Nennvolumen Gefäss VN [ℓ]</span>
+                        <div class="res-val highlight"><span id="res-vn">0</span> ℓ <small id="res-pf-hint" style="font-size: 0.7rem; opacity: 0.6; margin-left: 5px;"></small></div>
+                    </div>
+
+                    <div class="res-item highlight-border">
+                        <span class="res-label">Sicherheitsventil</span>
+                        <div class="res-val" style="font-size: 1.2rem;"><span id="sv-result-text">-</span></div>
+                    </div>
+
+                    <div class="res-item">
+                        <span class="res-label">Mindestdruck p0 [bar]</span>
+                        <div class="res-val"><span id="res-p0">0</span> bar</div>
+                    </div>
+                    <div class="res-item">
+                        <span class="res-label">Anfangsdruck pa [bar]</span>
+                        <div class="res-val"><span id="res-pa">0</span> bar</div>
+                    </div>
+                    <div class="res-item highlight-border">
+                        <span class="res-label">Enddruck pe [bar]</span>
+                        <div class="res-val"><span id="res-pe">0</span> bar</div>
+                    </div>
+                </div>
+
+                <div id="status-message" class="status-box">
+                    <div class="status-icon">✓</div>
+                    <div class="status-text" id="status-text">Berechnung erfolgreich. pe und Sicherheitsventil sind
+                        optimal aufeinander abgestimmt.</div>
+                </div>
+            </div>
+
+            <div class="results-info-layout">
+                <div class="card info-card">
+                    <h3>Details zur Berechnung</h3>
+                    <ul class="detail-list">
+                        <li><span class="d-label">Ausdehnungskoeffizient e:</span> <span id="det-e"></span></li>
+                        <li><span class="d-label">Ausdehnungskoeffizient ehs:</span> <span id="det-ehs"></span></li>
+                    </ul>
+                </div>
+
+                <div class="card info-card recommendation-card">
+                    <h3>Produktempfehlung</h3>
+                    <ul class="detail-list" id="recommendation-list">
+                        <!-- JS wird dies ausfüllen -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Alternative Varianten -->
+            <div class="card info-card alternatives-card" id="alternatives-section" style="margin-top: 1rem;">
+                <h3 onclick="toggleAlternatives()"
+                    style="cursor: pointer; display: flex; align-items: center; gap: 0.8rem; user-select: none; margin-bottom: 0;">
+                    <span id="alternatives-toggle-icon"
+                        style="transition: transform 0.3s ease; display: inline-block;">▼</span>
+                    Alternative Gefässvarianten
+                </h3>
+                <div id="alternatives-collapsible" class="hidden-section"
+                    style="transition: all 0.3s ease; overflow: hidden; margin-top: 1.2rem;">
+                    <p class="settings-intro" style="margin-bottom: 1rem;">Folgende Alternativen würden ebenfalls zum
+                        benötigten Nennvolumen passen:</p>
+                    <ul class="detail-list" id="alternatives-list">
+                        <!-- JS wird dies ausfüllen -->
+                    </ul>
+                </div>
+            </div>
+
+            <div class="print-btn-bar" style="margin-top: 2rem; text-align: center;">
+                <button type="button" onclick="window.print()" class="btn-primary"
+                    style="background:#4b5563; box-shadow: 0 4px 15px rgba(75, 85, 99, 0.4);">
+                    🖨️ PDF / Drucken
+                </button>
+                <span style="display:block; margin-top:8px; font-size:0.9rem; color:#888;">Schulmässige Dokumentation
+                    des exakten Rechenwegs.</span>
+            </div>
+        </div>
+
+        <!-- Detaillierter Report (sichtbar am Bildschirm unter den Ergebnissen und exklusiv im Druck) -->
+        <div class="card report-card hidden mt-2" id="report-view"
+            style="background: rgba(255,255,255,0.03); margin-top:40px; border: 1px solid rgba(255,255,255,0.1);">
+            <div id="report-content" class="report-content" style="font-size: 1.05rem; line-height: 1.6;">
+                <!-- JS injects report -->
+            </div>
+        </div>
+    </main>
+
+    <script src="calculate.js?v=21"></script>
+    <!-- Collapsible Library Drawer -->
+    <div id="library-drawer" class="library-drawer closed">
+        <div class="drawer-header">
+            <h2>📚 Archiv</h2>
+            <button type="button" id="btn-close-library" class="btn-close"
+                onclick="toggleLibrary(false)">&times;</button>
+        </div>
+        <div class="drawer-body">
+            <div class="search-container">
+                <input type="text" id="library-search" placeholder="Durchsuchen...">
+            </div>
+            <div id="library-grid" class="document-grid">
+                <!-- Buttons injected by JS -->
+            </div>
+        </div>
+        <div class="drawer-footer">
+            Dokumente in G:/IMI Ber
+        </div>
+    </div>
+
+    <!-- Norm Info Modal -->
+    <div id="norm-modal" class="modal-overlay hidden" onclick="closeNormModal(event)">
+        <div class="modal-content animate-in" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>📖 SWKI HE301-01 Grundlagen</h2>
+                <button type="button" class="btn-close" onclick="closeNormModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <section class="formula-section">
+                    <h3>Die Formel nach SWKI HE301-01:</h3>
+                    <div class="formula-box">
+                        Ve = e &times; Vs &times; X + ehs &times; Vhs
+                    </div>
+                    <ul class="norm-list">
+                        <li><strong>Ve:</strong> Ausdehnungsvolumen.</li>
+                        <li><strong>e:</strong> Ausdehnungskoeffizient für die mittlere Temperatur (tsmax + tr) / 2.
+                        </li>
+                        <li><strong>Vs:</strong> Wasserinhalt der Anlage. Dies ist der Wasserinhalt der Verteilung
+                            (Leitungen + Heizflächen).</li>
+                        <li><strong>X:</strong> Sicherheitsfaktor.</li>
+                        <li><strong>ehs:</strong> Ausdehnungskoeffizient Speicher. Faktor zur Berechnung des
+                            Ausdehnungsvolumens aus dem Wasserinhalt von Wärme/Kältespeichern.</li>
+                        <li><strong>Vhs:</strong> Gesamtwasserinhalt von Wärme- und Kältespeichern, die an der
+                            Volumenausdehnung beteiligt und nicht in Vs berücksichtigt sind. Dies ist der Wasserinhalt
+                            der Zentrale (Kessel + Speicher).</li>
+                    </ul>
+                </section>
+
+                <hr class="modal-divider">
+
+                <section class="safety-section">
+                    <h3>Der Sicherheitsfaktor X nach SWKI:</h3>
+                    <ul class="norm-list">
+                        <li><strong>Q &le; 10 kW:</strong> X = 3,0</li>
+                        <li><strong>10 kW < Q &le; 150 kW:</strong> X = (87 - 0,3 &times; Q) / 28</li>
+                        <li><strong>Q > 150 kW:</strong> X = 1,5</li>
+                    </ul>
+                </section>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-primary" onclick="closeNormModal()">Schliessen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for IMI Reference Check -->
+    <div id="reference-modal" class="modal-overlay hidden" onclick="closeReferenceModal(event)">
+        <div class="modal-content"
+            style="max-width: 95vw; width: 1200px; padding: 2rem; background: #1a1e23; border: 1px solid var(--accent); display: flex; flex-direction: column;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;">
+                <h2 style="margin:0; color:var(--accent); display:flex; align-items:center; gap:0.8rem;">
+                    <span style="font-size: 1.5rem;">⚠️</span> IMI APP Referenz (Abgleich)
+                </h2>
+                <button type="button" class="btn-close" onclick="closeReferenceModal()">&times;</button>
+            </div>
+
+            <div style="display: block; flex: 1; overflow: hidden;">
+                <div style="color: #ccc; font-size: 0.9rem; line-height: 1.6; max-width: 720px; margin: 0 auto;">
+                    <h3 style="color: white; font-size: 1.1rem; margin-bottom: 1rem;">Kontroll-Parameter:</h3>
+                    <ul style="padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.8rem; margin: 0;">
+                        <li><b>Vs-Werte:</b> <span id="ref-vs-val">868l Basis + 1500l Speicher</span></li>
+                        <li><b>Leistung:</b> <span id="ref-q-val">100 kW</span></li>
+                        <li><b>Temp:</b> <span id="ref-temp-val">35 / 28 °C (Füll: 15°C)</span></li>
+                        <li><b>Min. Zulaufdruck pz:</b> <span id="ref-pz-val">0.5 bar</span></li>
+                        <li><b>IMI e:</b> <span id="ref-e-val" style="color: var(--accent);">0.00900</span>
+                            (Sicherheits-Min)</li>
+                        <li><b>IMI esto:</b> <span id="ref-esto-val" style="color: var(--accent);">0.0107</span>
+                            (Speicher-Min)</li>
+                        <li><b>Faktor X:</b> <span id="ref-x-val" style="color: var(--accent);">2.04</span></li>
+                        <li><b>Gesamt-Ve:</b> <span id="ref-ve-val" style="color: white; font-size: 1.2rem;">32
+                                Liter</span></li>
+                    </ul>
+                    <div
+                        style="margin-top: 2rem; padding: 1rem; background: rgba(255,165,0,0.1); border-left: 3px solid orange; border-radius: 4px;">
+                        <small style="color: #ffa500;">Hinweis: Die App nutzt diese Referenzwerte für 100%
+                            Norm-Konformität im Heizungsmodus.</small>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; text-align: center;">
+                <button type="button" class="btn-primary" onclick="closeReferenceModal()"
+                    style="padding: 0.8rem 2.5rem;">Verstanden & Zurück</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert Modal -->
+    <div id="custom-alert" class="modal-overlay hidden" onclick="window.closeCustomAlert()">
+        <div class="modal-content custom-alert-modal animate-in" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-icon">⚠️</div>
+                <h2 id="custom-alert-title">System-Hinweis</h2>
+            </div>
+            <div class="modal-body" id="custom-alert-message">
+                <!-- Message injected here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-primary" onclick="window.closeCustomAlert()" style="width: 100%; justify-content: center;">OK</button>
+            </div>
+        </div>
+    </div>
+    <!-- IMI Vordruck Strategy Modal -->
+    <div id="imi-p0-modal" class="modal-overlay hidden" style="z-index: 9999;">
+        <div class="modal-content custom-alert-modal animate-in" style="max-width: 500px;" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-icon" style="background: rgba(16, 185, 129, 0.2); color: var(--accent);">📊</div>
+                <h2>IMI Vordruck-Strategie</h2>
+            </div>
+            <div class="modal-body" style="text-align: left; line-height: 1.5; font-size: 0.95rem;">
+                <p>HySelect bietet zwei Strategien für den Vordruck (p0). Wie soll CompressoCalc für diesen Vergleich rechnen?</p>
+                
+                <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+                    <div class="imi-strategy-card" style="padding: 1.2rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2); cursor: pointer; transition: all 0.2s;" onclick="window.setImiStrategy('min')">
+                        <strong style="color: var(--accent); display: block; margin-bottom: 0.3rem;">A) Auf Minimum optimieren (1.28 bar)</strong>
+                        <small style="color: var(--text-muted);">Minimiert das erforderliche Nennvolumen (Vn). Erfordert exakte Einstellung vor Ort.</small>
+                    </div>
+                    
+                    <div class="imi-strategy-card" style="padding: 1.2rem; background: rgba(255, 255, 255, 0.05); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); cursor: pointer; transition: all 0.2s;" onclick="window.setImiStrategy('factory')">
+                        <strong style="color: #fff; display: block; margin-bottom: 0.3rem;">B) Werkseitig belassen (1.50 bar)</strong>
+                        <small style="color: var(--text-muted);">Nutzt den Lieferdruck. Spart Montagezeit, benötigt aber oft ein grösseres Gefäss.</small>
+                    </div>
+
+                    <div class="imi-strategy-card" style="padding: 1.2rem; background: rgba(255, 255, 255, 0.05); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); cursor: pointer; transition: all 0.2s;" onclick="window.setImiStrategy('manual')">
+                        <strong style="color: #fff; display: block; margin-bottom: 0.3rem;">C) Wie manuell eingestellt</strong>
+                        <small style="color: var(--text-muted);">Übernimmt den aktuell im Feld eingetragenen Wert für den Vordruck.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content: center; margin-top: 1.5rem;">
+                 <button type="button" class="btn-secondary" onclick="window.closeImiModal()" style="font-size: 0.8rem; opacity: 0.5; background: none; border: none; cursor: pointer;">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+    <div id="toast" class="toast">
+        <div class="toast-icon">✓</div>
+        <span id="toast-message">Kopiert!</span>
+    </div>
+</body>
+</html>

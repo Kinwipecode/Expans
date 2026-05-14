@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminologie - Technische Kenngrößen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #10b981;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .search-container {
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        #search {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        #search:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.03);
+            text-align: left;
+            padding: 1.25rem;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent);
+            border-radius: 6px;
+            font-weight: 800;
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+
+        .nr {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .desc {
+            font-size: 0.95rem;
+        }
+
+        @media screen and (max-width: 600px) {
+            body {
+                padding: 1rem;
+            }
+
+            th:nth-child(1),
+            td:nth-child(1) {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Technische Kenngrößen</h1>
+            <p style="color: var(--text-muted)"> Glossar der Bezeichnungen für Druckhaltung und Wassertechnik </p>
+        </header>
+
+        <div class="search-container">
+            <input type="text" id="search" placeholder="Suche nach Kürzel oder Bezeichnung (z.B. pa, Hst, Volumen)...">
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th width="60">Nr.</th>
+                    <th width="150">Kürzel</th>
+                    <th>Bezeichnung</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <!-- Content will be injected by JS -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const data = [
+            { id: 1, k: "B", d: "Charakteristische Baubreite des Gerätes" },
+            { id: 2, k: "D", d: "Charakteristischer Durchmesser des Gerätes" },
+            { id: 3, k: "DN", d: "Nennweite; numerische Grössenangabe für Rohrdimensionen nach Druckgeräterichtlinie" },
+            { id: 4, k: "dpq<sub>N</sub>", d: "Druckverlust bezogen auf die Nenndurchflussleistung eines Gerätes" },
+            { id: 5, k: "dpu", d: "Arbeitsdruckbereich, für den ein Gerät ausgelegt ist" },
+            { id: 6, k: "e", d: "Ausdehnungskoeffizient nach EN 12828" },
+            { id: 7, k: "ehs", d: "Ausdehnungskoeffizient Speicher für Wärme/Kältespeicher" },
+            { id: 8, k: "G", d: "Zylindrisches Innengewinde, Aussengewinde, ISO 228" },
+            { id: 9, k: "H", d: "Charakteristische Bauhöhe des Gerätes (H1, H2, ...)" },
+            { id: 10, k: "h", d: "Montagemasse (h1, h2, ...)" },
+            { id: 11, k: "Hst", d: "Statische Höhe; Wassersäule zwischen höchstem Punkt und Anschluss" },
+            { id: 12, k: "Hst<sub>m</sub>", d: "Maximale statische Höhe für den Einsatz von Blasenabscheidern" },
+            { id: 13, k: "I", d: "Elektrischer Strom; zulässige Strombelastung für ein Gerät" },
+            { id: 14, k: "IP", d: "Code für Schutzarten und Berührungsschutz nach EN 60529" },
+            { id: 15, k: "Kvs", d: "Durchflusskennwert; Durchflussleistung bei einem Differenzdruck von 1 bar" },
+            { id: 16, k: "L", d: "Charakteristische Baulänge des Gerätes oder der Armatur" },
+            { id: 17, k: "m", d: "Gewicht des Gerätes im Auslieferungszustand ohne Verpackung" },
+            { id: 18, k: "pa", d: "Anfangsdruck; Unterwert für eine optimale Druckhaltung" },
+            { id: 19, k: "pe", d: "Enddruck; Oberwert für eine optimale Druckhaltung" },
+            { id: 20, k: "Pel", d: "Elektrische Anschlussleistung für ein Elektrogerät" },
+            { id: 21, k: "PF", d: "Druckfaktor; Verhältnis des erforderlichen Nennvolumens zum Wasser-Aufnahmevolumen" },
+            { id: 22, k: "po", d: "Mindestdruck; unterer Grenzwert für die Druckhaltung" },
+            { id: 23, k: "PS", d: "Maximal zulässiger Druck nach Druckgeräterichtlinie" },
+            { id: 24, k: "PS<sub>CH</sub>", d: "Maximal zulässiger Druck Schweiz nach SWKI HE301-01" },
+            { id: 25, k: "psv", d: "Ansprechdruck Sicherheitsventil nach EN ISO 4126-0" },
+            { id: 26, k: "psv<sub>c</sub>", d: "Schliessdruckdifferenz für Sicherheitsventile nach EN ISO 4126-1" },
+            { id: 27, k: "psv<sub>o</sub>", d: "Öffnungsdruckdifferenz für Sicherheitsventile nach EN ISO 4126-1" },
+            { id: 28, k: "pv", d: "Verdampfungsdruck nach EN 12828" },
+            { id: 29, k: "pw", d: "Frischwasserdruck; Fliessdruck des Frischwassernetzes vor der Nachspeiseeinrichtung" },
+            { id: 30, k: "pZvuns", d: "Minimaler Zulaufdruck für Geräte, z. B. Umwälzpumpe" },
+            { id: 31, k: "Q", d: "Wärmeleistung zur Grössenbestimmung der Geräte" },
+            { id: 32, k: "qN", d: "Förderleistung, Nenndurchfluss eines Gerätes" },
+            { id: 33, k: "qN<sub>max</sub>", d: "Maximaler Durchfluss eines Gerätes" },
+            { id: 34, k: "QNsv", d: "Wärmeleistung; Abblaseleistung eines Sicherheitsventiles bei Dampfausströmung" },
+            { id: 35, k: "QNsv<sub>wv</sub>", d: "Wärmeleistung; Abblaseleistung eines Sicherheitsventiles bei Wasserausströmung" },
+            { id: 36, k: "qNwm", d: "Nachspeiseleistung; Nennleistung der Nachspeiseeinrichtung" },
+            { id: 37, k: "R", d: "Kegliges Aussengewinde, ISO 7-1" },
+            { id: 38, k: "Rp", d: "Zylindrisches Innengewinde, ISO 7-1" },
+            { id: 39, k: "S", d: "Anschluss; charakteristische Dimension für den Geräteanschluss" },
+            { id: 40, k: "Si", d: "Dämmstärke" },
+            { id: 41, k: "S<sub>in</sub>", d: "Anschluss ein; Dimension für einströmende Medien" },
+            { id: 42, k: "S<sub>out</sub>", d: "Anschluss aus; Dimension für ausströmende Medien" },
+            { id: 43, k: "SPL", d: "Schalldruckpegel dB(A) - bewertet" },
+            { id: 44, k: "Sv", d: "Anschluss Gefäss; Dimension für den Geräteanschluss zum Gefäss" },
+            { id: 45, k: "Sw", d: "Anschluss Entwässerung; Dimension für Entleerungen, Entwässerungen" },
+            { id: 46, k: "Swm", d: "Anschluss Nachspeisung; charakteristische Dimension für den Nachspeiseanschluss" },
+            { id: 47, k: "T", d: "Tiefe; charakteristische Bautiefe des Gerätes" },
+            { id: 48, k: "TA", d: "Maximal zulässige Umgebungstemperatur für die Aufstellung" },
+            { id: 49, k: "TAZ", d: "Sicherheitstemperaturbegrenzer, Sicherheitstemperaturwächter, Absicherungstemperatur" },
+            { id: 50, k: "TB", d: "Maximal zulässige Blasentemperatur für die Butylblase" },
+            { id: 51, k: "TB<sub>min</sub>", d: "Minimal zulässige Blasentemperatur für die Butylblase" },
+            { id: 52, k: "t<sub>pr</sub>", d: "Primärvorlauftemperatur auf der Primärseite von Wärmeübertragern" },
+            { id: 53, k: "tr", d: "Rücklauftemperatur der Heizungsanlage bei Norm-Aussentemperatur" },
+            { id: 54, k: "TS", d: "Maximal zulässige Temperatur nach Druckgeräterichtlinie" },
+            { id: 55, k: "ts<sub>max</sub>", d: "Maximale Systemtemperatur zur Berechnung der Volumenausdehnung" },
+            { id: 56, k: "ts<sub>min</sub>", d: "Minimale Systemtemperatur; entspricht dem Erstarrungspunkt" },
+            { id: 57, k: "TS<sub>min</sub>", d: "Minimal zulässige Temperatur nach Druckgeräterichtlinie" },
+            { id: 58, k: "TV", d: "Maximale Vorlauftemperatur, für die ein Gerät ausgerüstet ist" },
+            { id: 59, k: "TWM", d: "Maximal zulässige Temperatur der Nachspeisung" },
+            { id: 60, k: "U", d: "Elektrische Spannung; Nennspannung für ein Elektrogerät" },
+            { id: 61, k: "Ve", d: "Ausdehnungsvolumen nach EN 12828" },
+            { id: 61.1, k: "Vi", d: "Teilwasserinhalt: Das Wasservolumen eines ganz bestimmten Teils oder Abschnitts i der Anlage (z.B. nur die Fussbodenheizung, nur die Steigleitungen oder nur ein spezieller Pufferspeicher)" },
+            { id: 61.2, k: "ei", d: "Teilspezifischer Ausdehnungskoeffizient: Der Ausdehnungskoeffizient, der exakt für die Temperatur gilt, die in diesem Abschnitt i herrscht" },
+            { id: 62, k: "Vhs", d: "Gesamtwasserinhalt von Wärme- und Kältespeichern" },
+            { id: 63, k: "VN", d: "Nennvolumen; gesamtes inneres Volumen des Druckraumes" },
+            { id: 64, k: "VN<sub>d</sub>", d: "Wasserinhalt, für den ein Gerät geeignet ist" },
+            { id: 65, k: "VPE", d: "Verpackungseinheit; Standard-Verpackungsmenge" },
+            { id: 66, k: "Vs", d: "Wasserinhalt Anlage gesamt nach EN 12828" },
+            { id: 67, k: "VS", d: "Spezifischer Wasserinhalt Anlage gesamt bezogen auf die Heizflächenleistung" },
+            { id: 68, k: "Vsolar", d: "Wasserinhalt Kollektorgruppe, der bei Stillstand verdampfen kann" },
+            { id: 69, k: "Vwr", d: "Wasservorlage nach EN 12828" }
+        ];
+
+        const tbody = document.getElementById('table-body');
+        const searchInput = document.getElementById('search');
+
+        function renderTable(filter = "") {
+            tbody.innerHTML = '';
+            const filtered = data.filter(item =>
+                item.k.toLowerCase().includes(filter.toLowerCase()) ||
+                item.d.toLowerCase().includes(filter.toLowerCase())
+            );
+
+            filtered.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                <td><span class="nr">${item.id}</span></td>
+                <td><span class="badge">${item.k}</span></td>
+                <td><span class="desc">${item.d}</span></td>
+            `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        searchInput.addEventListener('input', (e) => renderTable(e.target.value));
+
+        // Initial render
+        renderTable();
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CompressoCalc - Image Test Page</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@300;500;700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --accent: #00e4a1;
+            --text-main: #e6edf3;
+            --text-muted: #8b949e;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            margin-bottom: 40px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .image-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .image-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent);
+        }
+
+        .image-card h2 {
+            font-family: 'Outfit', sans-serif;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .image-card img {
+            width: 100%;
+            height: 250px;
+            object-fit: contain;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .image-card .filename {
+            font-family: monospace;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 12px;
+            border-radius: 6px;
+        }
+
+        .back-link {
+            margin-top: 50px;
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            padding: 10px 20px;
+            border: 1px solid var(--accent);
+            border-radius: 30px;
+            transition: all 0.2s ease;
+        }
+
+        .back-link:hover {
+            background: var(--accent);
+            color: #000;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Bilder-Zuordnungstest</h1>
+
+    <div class="test-grid">
+        <!-- Statico -->
+        <div class="image-card">
+            <h2>Statico (SU)</h2>
+            <img src="statico SU.png" alt="Statico SU">
+            <span class="filename">statico SU.png</span>
+        </div>
+
+        <div class="image-card">
+            <h2>Statico (SD)</h2>
+            <img src="statico SD.png" alt="Statico SD">
+            <span class="filename">statico SD.png</span>
+        </div>
+
+        <!-- Simply Compresso -->
+        <div class="image-card">
+            <h2>Simply Compresso</h2>
+            <img src="simply.png" alt="Simply Compresso">
+            <span class="filename">simply.png</span>
+        </div>
+
+        <!-- Compresso Connect F -->
+        <div class="image-card">
+            <h2>Compresso Connect F (Wand)</h2>
+            <img src="connectf.png" alt="Compresso Connect F">
+            <span class="filename">connectf.png</span>
+        </div>
+
+        <!-- Compresso Connect -->
+        <div class="image-card">
+            <h2>Compresso Connect (Standgerät)</h2>
+            <img src="connect.png" alt="Compresso Connect">
+            <span class="filename">connect.png</span>
+        </div>
+
+        <!-- Transfero -->
+        <div class="image-card">
+            <h2>Transfero</h2>
+            <img src="transfero.png" alt="Transfero">
+            <span class="filename">transfero.png</span>
+        </div>
+    </div>
+
+    <a href="index.html" class="back-link">← Zurück zum Rechner</a>
+
+</body>
+
+</html>

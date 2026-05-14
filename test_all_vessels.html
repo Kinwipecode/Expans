@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CompressoCalc - Full Database Image Test</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@300;500;700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            padding: 40px;
+            background: #0a0f16;
+        }
+
+        .test-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .test-header h1 {
+            color: var(--accent);
+            font-family: 'Outfit';
+            font-weight: 900;
+        }
+
+        .test-section {
+            margin-bottom: 60px;
+        }
+
+        .test-section h2 {
+            color: #fff;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            font-family: 'Outfit';
+        }
+
+        .test-row {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            width: 100%;
+        }
+
+        .test-row .recommendation-card {
+            flex: 1;
+            margin-bottom: 0;
+            min-height: auto;
+        }
+
+        .test-row .recommendation-card .detail-list li {
+            min-height: 80px;
+        }
+
+        .recommendation-card {
+            margin-bottom: 2rem;
+            width: 100%;
+            border: 1px solid rgba(0, 228, 161, 0.2);
+        }
+
+        .recommendation-card .detail-list li {
+            margin-bottom: 0;
+        }
+
+        /* Ensure the preview popup works in this test page */
+        .vessel-preview-popup {
+            position: fixed;
+            z-index: 9999;
+            background: #1a1f26;
+            border: 2px solid var(--accent);
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.6);
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            width: 280px;
+            backdrop-filter: blur(10px);
+        }
+
+        .vessel-preview-popup.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .vessel-preview-popup img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .vessel-preview-title {
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .vessel-preview-tag {
+            color: #8b949e;
+            font-size: 0.8rem;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="test-header">
+        <h1>Datenbank-Vorschautest</h1>
+        <p style="color:#8b949e">Prüfung aller hinterlegten Gefässtypen auf korrekte Bildzuordnung (Hover notwendig zum
+            Prüfen)</p>
+    </div>
+
+    <div id="test-container">
+        <!-- Sections will be injected here -->
+    </div>
+
+    <script>
+        // --- DATA MOCKUP from calculate.js ---
+        const staticoDataList = [
+            { type: "SD 8.3", vol: 8, p0_factory: 1.0, ps: 3 },
+            { type: "SD 12.3", vol: 12, p0_factory: 1.0, ps: 3 },
+            { type: "SD 18.3", vol: 18, p0_factory: 1.0, ps: 3 },
+            { type: "SD 25.3", vol: 25, p0_factory: 1.0, ps: 3 },
+            { type: "SD 35.3", vol: 35, p0_factory: 1.0, ps: 3 },
+            { type: "SD 50.3", vol: 50, p0_factory: 1.5, ps: 3 },
+            { type: "SD 80.3", vol: 80, p0_factory: 1.5, ps: 3 },
+            { type: "SU 140.3", vol: 140, p0_factory: 1.5, ps: 3 },
+            { type: "SU 200.3", vol: 200, p0_factory: 1.5, ps: 3 },
+            { type: "SU 300.3", vol: 300, p0_factory: 1.5, ps: 3 },
+            { type: "SU 400.3", vol: 400, p0_factory: 1.5, ps: 3 },
+            { type: "SU 500.3", vol: 500, p0_factory: 1.5, ps: 3 },
+            { type: "SU 140.6", vol: 140, p0_factory: 3.5, ps: 6 },
+            { type: "SU 200.6", vol: 200, p0_factory: 3.5, ps: 6 },
+            { type: "SU 300.6", vol: 300, p0_factory: 3.5, ps: 6 },
+            { type: "SU 400.6", vol: 400, p0_factory: 3.5, ps: 6 },
+            { type: "SU 500.6", vol: 500, p0_factory: 3.5, ps: 6 },
+            { type: "SU 600.6", vol: 600, p0_factory: 3.5, ps: 6 },
+            { type: "SU 800.6", vol: 800, p0_factory: 3.5, ps: 6 },
+            { type: "SU 140.10", vol: 140, p0_factory: 4.0, ps: 10 },
+            { type: "SU 200.10", vol: 200, p0_factory: 4.0, ps: 10 },
+            { type: "SU 300.10", vol: 300, p0_factory: 4.0, ps: 10 },
+            { type: "SU 400.10", vol: 400, p0_factory: 4.0, ps: 10 },
+            { type: "SU 500.10", vol: 500, p0_factory: 4.0, ps: 10 }
+        ];
+
+        const vesselData = {
+            'CU': {
+                '4': [{ v: 200, art: '712 1100' }, { v: 300, art: '712 1101' }, { v: 400, art: '712 1102' }, { v: 500, art: '712 1103' }, { v: 600, art: '712 1104' }, { v: 800, art: '712 1105' }],
+                '6': [{ v: 200, art: '712 1000' }, { v: 300, art: '712 1001' }, { v: 400, art: '712 1002' }, { v: 500, art: '712 1003' }, { v: 600, art: '712 1004' }, { v: 800, art: '712 1005' }]
+            },
+            'CG': {
+                '6': [{ v: 300, art: '712 1006' }, { v: 500, art: '712 1007' }, { v: 700, art: '712 1008' }, { v: 1000, art: '712 1009' }, { v: 1500, art: '712 1010' }, { v: 2000, art: '712 1015' }, { v: 3000, art: '712 1012' }, { v: 4000, art: '712 1013' }, { v: 5000, art: '712 1014' }],
+                '10': [{ v: 300, art: '712 3000' }, { v: 500, art: '712 3001' }, { v: 700, art: '712 3002' }, { v: 1000, art: '712 3003' }, { v: 1500, art: '712 3004' }, { v: 2000, art: '712 3005' }, { v: 3000, art: '712 3006' }]
+            }
+        };
+
+        const transferoVesselData = {
+            'TU': {
+                '6': [{ v: 200, art: '713 1100' }, { v: 300, art: '713 1101' }, { v: 500, art: '713 1102' }, { v: 750, art: '713 1103' }, { v: 1000, art: '713 1104' }, { v: 1500, art: '713 1105' }, { v: 2000, art: '713 1106' }, { v: 3000, art: '713 1107' }, { v: 4000, art: '713 1108' }, { v: 5000, art: '713 1009' }],
+                '10': [{ v: 300, art: '713 3100' }, { v: 500, art: '713 3101' }, { v: 750, art: '713 3102' }, { v: 1000, art: '713 3103' }, { v: 1500, art: '713 3104' }, { v: 2000, art: '713 3105' }, { v: 3000, art: '713 3106' }]
+            },
+            'TG': {
+                '6': [{ v: 300, art: '713 1000' }, { v: 500, art: '713 1001' }, { v: 750, art: '713 1002' }, { v: 1000, art: '713 1003' }, { v: 1500, art: '713 1004' }, { v: 2000, art: '713 1005' }, { v: 3000, art: '713 1006' }, { v: 4000, art: '713 1007' }, { v: 5000, art: '713 1008' }],
+                '10': [{ v: 300, art: '713 3000' }, { v: 500, art: '713 3001' }, { v: 750, art: '713 3002' }, { v: 1000, art: '713 3003' }, { v: 1500, art: '713 3004' }, { v: 2000, art: '713 3005' }, { v: 3000, art: '713 3006' }]
+            }
+        };
+
+        const simplyModels = [
+            "Simply Compresso C 2.1-80 S Connect",
+            "Simply Compresso C 2.1-80 SWM Connect",
+            "Compresso CD 80.4 E"
+        ];
+
+        // --- PREVIEW LOGIC from calculate.js ---
+        const previewPopup = document.createElement('div');
+        previewPopup.className = 'vessel-preview-popup';
+        document.body.appendChild(previewPopup);
+        let previewTimer = null;
+
+        function attachImagePreview(el, labelText) {
+            el.style.cursor = 'help';
+            el.onmouseenter = (e) => {
+                let type = 'connectf';
+                const text = labelText.toLowerCase();
+                if (text.includes('statico') || text.includes('sd') || text.includes('su')) {
+                    if (text.includes('sd')) type = 'statico SD';
+                    else if (text.includes('su')) type = 'statico SU';
+                    else type = 'statico';
+                }
+                else if (text.includes('simply')) type = 'simply';
+                else if (text.includes('transfero')) type = 'transfero';
+                else if (text.includes('f (art.')) type = 'connectf';
+                else if (text.includes('compresso')) type = 'connect';
+
+                previewTimer = setTimeout(() => {
+                    const rect = el.getBoundingClientRect();
+                    previewPopup.innerHTML = `
+                        <div class="vessel-preview-tag">IMI Pneumatex</div>
+                        <div class="vessel-preview-title">${type.toUpperCase()} Serie</div>
+                        <img src="${type}.png" alt="${type}">
+                        <div class="vessel-preview-tag" style="font-size:0.7rem; opacity:0.5;">Vorschau für: ${labelText}</div>
+                    `;
+                    let x = rect.left + (rect.width / 2) - 140;
+                    let y = rect.top - 310;
+                    if (y < 10) y = rect.bottom + 10;
+                    if (x < 10) x = 10;
+                    if (x + 280 > window.innerWidth) x = window.innerWidth - 290;
+                    previewPopup.style.left = x + 'px';
+                    previewPopup.style.top = y + 'px';
+                    previewPopup.classList.add('visible');
+                }, 200); // Shorter for test page
+            };
+            el.onmouseleave = () => { clearTimeout(previewTimer); previewPopup.classList.remove('visible'); };
+        }
+
+        // --- RENDER TEST ROWS ---
+        const container = document.getElementById('test-container');
+
+        function createSection(title, items) {
+            const sec = document.createElement('div');
+            sec.className = 'test-section';
+            sec.innerHTML = `<h2>${title}</h2><div class="test-list-container"></div>`;
+            const listContainer = sec.querySelector('.test-list-container');
+
+            items.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'test-row';
+
+                // Card 1: Model
+                row.innerHTML = `
+                    <div class="card info-card recommendation-card">
+                        <ul class="detail-list">
+                            <li>
+                                <span class="d-label">Gefässmodell</span>
+                                <span class="res-val-highlight">${item.text}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card info-card recommendation-card">
+                        <ul class="detail-list">
+                            <li>
+                                <span class="d-label">Inbetriebnahme-Info</span>
+                                <span class="hint-text">${item.info}</span>
+                            </li>
+                        </ul>
+                    </div>
+                `;
+
+                const modelLi = row.querySelector('li');
+                attachImagePreview(modelLi, item.text);
+                listContainer.appendChild(row);
+            });
+            container.appendChild(sec);
+        }
+
+        // Statico
+        createSection("Statico SD/SU Series", staticoDataList.map(d => ({
+            text: `Statico ${d.type}`,
+            info: `Werkseitiger Vordruck: <b>${d.p0_factory.toFixed(1)} bar</b>. Bitte auf <b>[Soll-Vordruck p₀]</b> einstellen.`
+        })));
+
+        // Connect F (CU/CG)
+        const connectFItems = [];
+        vesselData.CU['6'].forEach(v => connectFItems.push({
+            text: `Compresso CU ${v.v}.6`,
+            info: `Präzisionsdruckhaltung ±0.1 bar, F-Control mit BrainCube Connect.`
+        }));
+        vesselData.CG['6'].forEach(v => connectFItems.push({
+            text: `Compresso CG ${v.v}.6`,
+            info: `Standard-Gefäss für Connect F Systeme. Ausführung 6 bar.`
+        }));
+        createSection("Compresso Connect F (CU/CG)", connectFItems);
+
+        // Simply
+        createSection("Simply Compresso Series", simplyModels.map(m => ({
+            text: m,
+            info: "Kompaktsystem mit integrierter Steuerung und 80L Basisgefäss."
+        })));
+
+        // Transfero
+        const transferoItems = [];
+        transferoVesselData.TU['6'].forEach(v => transferoItems.push({
+            text: `Transfero TU ${v.v}.6`,
+            info: "Präzisionsdruckhaltung ±0.2 bar mit integrierter Entgasung."
+        }));
+        createSection("Transfero Series (TU/TG)", transferoItems);
+
+    </script>
+</body>
+
+</html>

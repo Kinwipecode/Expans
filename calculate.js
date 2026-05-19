@@ -3745,12 +3745,12 @@ function renderLibrary(filter = '') {
         card.draggable = true;
         card.dataset.id = doc.id;
         card.innerHTML = `
-            <div class="doc-info" onclick="window.open('../${doc.file}', '_blank')">
+            <div class="doc-info" onclick="window.open('docs/${doc.file}', '_blank')">
                 <h3>${doc.title}</h3>
                 <p>${doc.desc}</p>
             </div>
             <div class="doc-meta">
-                <span class="btn-doc-open" onclick="window.open('../${doc.file}', '_blank')">PDF Öffnen</span>
+                <span class="btn-doc-open" onclick="window.open('docs/${doc.file}', '_blank')">PDF Öffnen</span>
                 <span style="font-size: 1.2rem; cursor: grab; opacity: 0.5;">⋮⋮</span>
             </div>
         `;
